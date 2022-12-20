@@ -1,32 +1,101 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import axios from 'axios'
+import {BASE_URL, APIHandler} from '../config'
 
 export default function Kayit() {
   const [firstname, setFirstname] = useState("")
   const [lastname, setLastname] = useState("")
   const [username, setUsername] = useState("")
+  const [alertType, setAlertType] = useState("")
+  const [alertMessage, setAlertMessage] = useState("")
+  const [userList, setUserList] = useState([])
 
+  const postData = async () => {
+    try {
+      const newUser = {
+        firstname,
+        lastname,
+        username
+      }
+      APIHandler.post("WeatherForecast",
+      newUser,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      
+      )
+      const response = await axios.post(`${BASE_URL}/WeatherForecast`, newUser,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+  
+        if(response.status == 200){
+          setAlertType("success")
+          setAlertMessage("Kullanici kaydi olusturuldu.")
+          setUserList([...userList, newUser])
+        }
 
-  const fetchData = async () => {
-    const response = await axios.post("https://localhost:7089/WeatherForecast", {
-      firstname,
-      lastname,
-      username
-    },
+    } catch (error) {
+      setAlertType("danger")
+      setAlertMessage(error.response.data)
+    }
+
+  }
+
+  const getUserList = async () => {
+    const response = await axios.get(`${BASE_URL}/WeatherForecast`, {},
       {
         headers: {
           'Content-Type': 'application/json'
         }
       })
+      console.log('TUM LISTE response.data', response.data)
+      setUserList(response.data)
   }
 
+  const renderAlert = () => {
+    if(alertType){
+      return (
+        <div class={`alert alert-${alertType}`} role="alert">
+          {alertMessage}
+        </div>
+      )
+    }
+ 
+  }
+
+  const renderUserList = () => {
+    debugger
+    return userList.map((val, i)=> (
+      <tr>
+        <th scope="row">{i}</th>
+        <td>{val.firstname}</td>
+        <td>{val.lastname}</td>
+        <td>{val.username}</td>
+    </tr>
+      ))
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    fetchData()
+    postData()
   }
+
+  useEffect(() => {
+    getUserList()
+  }, [])
+
+
+
+
   return (
+    <div>
     <form onSubmit={handleSubmit}>
+      {renderAlert()}
       <div className="form-row">
         <div className="col-md-4 mb-3">
           <label htmlFor="validationServer01">Adınız</label>
@@ -91,5 +160,23 @@ export default function Kayit() {
     </div> */}
       <button className="btn btn-primary" type="submit" >Kaydet</button>
     </form>
+      <div style={{paddingTop:50}}>
+            <table className="table table-bordered">
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">First</th>
+              <th scope="col">Last</th>
+              <th scope="col">Handle</th>
+            </tr>
+          </thead>
+          <tbody>
+
+          {renderUserList()}
+          
+          </tbody>
+        </table>
+      </div>
+    </div>
   )
 }
